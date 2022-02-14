@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import scipy.special
+from sklearn import neighbors
 import torch
 import torch_geometric
 from tqdm import tqdm
@@ -1559,8 +1560,13 @@ class GraphSVX():
 
         # Most influential features splitted bewteen neighbours and features
         if D > 5 and self.M != self.F:
+            ########@mastro##########
+            sparsity = 0.5
+            k_hop_subgraph_size = len(pred_explanation[self.F:]) #we take into considerations only nodes, not features
+            num_important_features = round((1 - sparsity) * k_hop_subgraph_size) #round and not just int
+            ###########################
             _, idxs = torch.topk(torch.from_numpy(
-                np.abs(pred_explanation[self.F:])), 3)
+                np.abs(pred_explanation[self.F:])), num_important_features) #@mastro changed 3 to num_important_features, according to sparsity
             vals = [pred_explanation[self.F + idx] for idx in idxs]
             influential_nei = {}
             for idx, val in zip(idxs, vals):

@@ -70,6 +70,7 @@ def main():
                                         args.regu,
                                         True)
 
+    #print("Explanations: ", explanations) #@mastro edit
     print('Sum explanations: ', [np.sum(explanation) for explanation in explanations])
     print('Base value: ', explainer.base_values)
 
