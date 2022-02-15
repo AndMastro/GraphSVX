@@ -1560,11 +1560,102 @@ class GraphSVX():
 
         # Most influential features splitted bewteen neighbours and features
         if D > 5 and self.M != self.F:
-            ########@mastro##########
-            sparsity = 0.5
+            _, idxs = torch.topk(torch.from_numpy(
+                np.abs(pred_explanation[self.F:])), 3)
+            vals = [pred_explanation[self.F + idx] for idx in idxs]
+            influential_nei = {}
+            for idx, val in zip(idxs, vals):
+                influential_nei[self.neighbours[idx]] = val
+            print('Most influential neighbours: ', [
+                  (item[0].item(), item[1].item()) for item in list(influential_nei.items())])
+
+
+    #####@mastro###### i added this function             
+    def get_info_explanation(self, D, node_index, phi, feat_idx, true_pred, true_conf, base_value, multiclass, sparsity=None): #@mastro added sparsity parameter
+        """
+        Displays some information about explanations - for a better comprehension and audit
+        """
+        # Print some information
+        print('Explanations include {} node features and {} neighbours for this node\
+        for {} classes'.format(self.F, D, self.data.num_classes))
+
+        # Compare with true prediction of the model - see what class should truly be explained
+        print('Model prediction is class {} with confidence {}, while true label is {}'
+              .format(true_pred, true_conf, self.data.y[node_index]))
+
+        # Print base value
+        print('Base value', base_value, 'for class ', true_pred.item())
+
+        # Isolate explanations for predicted class - explain model choices
+        if multiclass:
+            pred_explanation = phi[true_pred, :]
+        else:
+            pred_explanation = phi
+
+        # print('Explanation for the class predicted by the model:', pred_explanation)
+
+        # Look at repartition of weights among neighbours and node features
+        # Motivation for regularisation
+        print('Weights for node features: ', sum(pred_explanation[:self.F]),
+              'and neighbours: ', sum(pred_explanation[self.F:]))
+        #print('Total Weights (abs val) for node features: ', sum(np.abs(pred_explanation[:self.F])),
+        #      'and neighbours: ', sum(np.abs(pred_explanation[self.F:])))
+
+        # Proportional importance granted to graph structure vs node features of v
+        #print('Feature importance wrt explainable part: {} %'.format( 100 * sum(pred_explanation[:self.F]) / (true_pred.item())))
+        #print('Node importance wrt explainable part: {} %'.format(100* sum(pred_explanation[self.F:]) / (true_pred.item())) )
+
+        # Note we focus on explanation for class predicted by the model here, so there is a bias towards
+        # positive weights in our explanations (proba is close to 1 everytime).
+        # Alternative is to view a class at random or the second best class
+
+        # Select most influential neighbours and/or features (+ or -)
+        if self.F + D > 10:
+            _, idxs = torch.topk(torch.from_numpy(np.abs(pred_explanation)), 6)
+            vals = [pred_explanation[idx] for idx in idxs]
+            influential_feat = {}
+            influential_nei = {}
+            for idx, val in zip(idxs, vals):
+                if idx.item() < self.F:
+                    influential_feat[feat_idx[idx]] = val
+                else:
+                    influential_nei[self.neighbours[idx-self.F]] = val
+            print('Most influential features: ', len([(item[0].item(), item[1].item()) for item in list(influential_feat.items())]),
+                  'and neighbours', len([(item[0].item(), item[1].item()) for item in list(influential_nei.items())]))
+
+        # Most influential features splitted bewteen neighbours and features
+        if self.F > 5:
+            _, idxs = torch.topk(torch.from_numpy(
+                np.abs(pred_explanation[:self.F])), 3)
+            vals = [pred_explanation[idx] for idx in idxs]
+            influential_feat = {}
+            for idx, val in zip(idxs, vals):
+                influential_feat[feat_idx[idx]] = val
+            print('Most influential features: ', [
+                  (item[0].item(), item[1].item()) for item in list(influential_feat.items())])
+
+        # Most influential features splitted bewteen neighbours and features
+        if D > 5 and self.M != self.F:
+            _, idxs = torch.topk(torch.from_numpy(
+                np.abs(pred_explanation[self.F:])), 3)
+            vals = [pred_explanation[self.F + idx] for idx in idxs]
+            influential_nei = {}
+            for idx, val in zip(idxs, vals):
+                influential_nei[self.neighbours[idx]] = val
+            print('Most influential neighbours: ', [
+                  (item[0].item(), item[1].item()) for item in list(influential_nei.items())])
+
+        #########@mastro#####
+        if sparsity is not None:
+            # we need to compute sparsity taking edges into account, not nodes
+            num_hops = 2
+            _, k_hop_subgraph_edge_index, _, _ = torch_geometric.utils.k_hop_subgraph(
+            node_index, num_hops, self.data.edge_index, relabel_nodes=True,
+            num_nodes=None)
+
             k_hop_subgraph_size = len(pred_explanation[self.F:]) #we take into considerations only nodes, not features
             num_important_features = round((1 - sparsity) * k_hop_subgraph_size) #round and not just int
-            ###########################
+            
             _, idxs = torch.topk(torch.from_numpy(
                 np.abs(pred_explanation[self.F:])), num_important_features) #@mastro changed 3 to num_important_features, according to sparsity
             vals = [pred_explanation[self.F + idx] for idx in idxs]
@@ -1573,7 +1664,8 @@ class GraphSVX():
                 influential_nei[self.neighbours[idx]] = val
             print('Most influential neighbours: ', [
                   (item[0].item(), item[1].item()) for item in list(influential_nei.items())])
-
+        ####################################################################          
+        
     def vizu(self, edge_mask, node_index, phi, predicted_class, hops, multiclass):
         """ Vizu of important nodes in subgraph around node_index
 

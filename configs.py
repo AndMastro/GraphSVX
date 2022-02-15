@@ -104,7 +104,7 @@ def arg_parse():
 
     parser.set_defaults(dataset='syn1',
                         model='GCN',
-                        indexes=[500, 600],
+                        indexes=[500], #@mastro I deleted node 600
                         num_samples=400,
                         fullempty=None,
                         S=1,
