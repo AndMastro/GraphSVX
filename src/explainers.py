@@ -140,10 +140,10 @@ class GraphSVX():
             # M: total number of features + neighbours considered for node v
             if regu==1 or D==0: 
                 D=0
-                print('Explainations only consider node features')
+                # print('Explainations only consider node features') #@mastro commented out
             if regu==0 or self.F==0:
                 self.F=0
-                print('Explainations only consider graph structure')
+                #print('Explainations only consider graph structure') #@mastro commented out
             self.M = self.F+D
 
             # Def range of endcases considered
@@ -900,8 +900,8 @@ class GraphSVX():
         # pred_confidence = torch.zeros(num_samples)
 
         # Create new matrix A and X - for each sample ≈ reform z from z
-        for (key, ex_nei), (_, ex_feat) in tqdm(zip(excluded_nei.items(), excluded_feat.items())):
-
+        #for (key, ex_nei), (_, ex_feat) in tqdm(zip(excluded_nei.items(), excluded_feat.items())): #@mastro removed tqdm
+        for (key, ex_nei), (_, ex_feat) in zip(excluded_nei.items(), excluded_feat.items()):
             # For each excluded neighbour, retrieve the column index of its occurences
             # in the adj matrix - store them in positions (list)
             positions = []
@@ -1026,8 +1026,8 @@ class GraphSVX():
             fz = torch.zeros(num_samples)
 
         # Construct new matrices A and X for each sample - reform z' from z
-        for (key, ex_nei), (_, ex_feat) in tqdm(zip(excluded_nei.items(), excluded_feat.items())):
-
+        #for (key, ex_nei), (_, ex_feat) in tqdm(zip(excluded_nei.items(), excluded_feat.items())): #@mastro tqdm removed
+        for (key, ex_nei), (_, ex_feat) in zip(excluded_nei.items(), excluded_feat.items()):
             # Isolate in the graph each node excluded from the sampled coalition
             positions = []
             for val in ex_nei:
@@ -1117,8 +1117,8 @@ class GraphSVX():
             #av_feat_values = np.mean(self.data.x[graph_index],axis=0)
         
         # Create new matrix A and X - for each sample ≈ reform z' from z
-        for (key, ex_nei) in tqdm(excluded_nei.items()):
-
+        #for (key, ex_nei) in tqdm(excluded_nei.items()): #@mastro
+        for (key, ex_nei) in excluded_nei.items():
             # Change adj matrix
             A = deepcopy(adj)
             A[ex_nei, :] = 0
@@ -1187,8 +1187,8 @@ class GraphSVX():
             fz = torch.zeros(num_samples)
 
         # Construct new matrices A and X for each sample - reform z from z'
-        for (key, ex_nei), (_, ex_feat) in tqdm(zip(excluded_nei.items(), excluded_feat.items())):
-
+        #for (key, ex_nei), (_, ex_feat) in tqdm(zip(excluded_nei.items(), excluded_feat.items())): #@mastro
+        for (key, ex_nei), (_, ex_feat) in zip(excluded_nei.items(), excluded_feat.items()):
             # For each excluded neighbour, retrieve the column index of its occurences
             # in the adj matrix - store them in positions (list)
             positions = []
@@ -1254,8 +1254,8 @@ class GraphSVX():
         excluded_nei = {}
 
         # Define excluded_feat and excluded_nei for each z'
+        #for i in tqdm(range(num_samples)): #@mastro
         for i in tqdm(range(num_samples)):
-
             # Define new node features dataset (we only modify x_v for now)
             # Store index of features that are not sampled (z_j=0)
             feats_id = []
